@@ -20,6 +20,17 @@
   (ynet/renew-token (yproduct/product-details-config :scopes) #())
   )
 
+(defn input [ratom]
+  [:input {:type "text"
+           :value @ratom
+           :on-change #(reset! ratom (-> % .-target .-value))}])
+
+(defn row [label ratom]
+  "Creates input elements bound to the atom specified"
+  [:div.row
+   [:div.col-md-2 [:label label]]
+   [:div.col-md-5 (input ratom)] [:span @ratom]])
+
 (defonce counter1-state (reagent/atom {:count 0}))
 
 (defn access-token []
@@ -41,35 +52,28 @@
     [:button {:on-click #(product-click)}
      "Get Products"]]])
 
+(defonce product-id (reagent/atom ""))
+
+
 (defn product-detail-click []
-  (yproduct/get-products "573c8cb7b3d043001d6b0998")
+  (yproduct/get-products @product-id)
   )
 
 (defn product-detail []
 
    [:div "Single product response: " (str (:response @yproduct/product-detail))
    [:div
+    (row "Product ID" product-id)
     [:button {:on-click #(product-detail-click)}
      "Get Single Product"]]])
 
-(defonce product-sku (reagent/atom "[sku]"))
-(defonce product-name (reagent/atom "[name]"))
-(defonce product-description (reagent/atom "[desc]"))
+(defonce product-sku (reagent/atom ""))
+(defonce product-name (reagent/atom ""))
+(defonce product-description (reagent/atom ""))
 
 (defn product-create-click[]
   (yproduct/create-product {"name" @product-name "description" @product-description "sku" @product-sku})
   )
-
-(defn input [ratom]
-  [:input {:type "text"
-           :value @ratom
-           :on-change #(reset! ratom (-> % .-target .-value))}])
-
-(defn row [label ratom]
-  "Creates input elements bound to the atom specified"
-  [:div.row
-   [:div.col-md-2 [:label label]]
-   [:div.col-md-5 (input ratom)] [:span @ratom]])
 
 (defn product-create []
 
@@ -85,7 +89,7 @@
             [access-token])
 
 (defcard-rg fetch-all-products
-            "*Some* _Documentation_ for Mr. Greg"
+            "Fetch *all* products"
             [products]
             {:inspect-data true}
             )

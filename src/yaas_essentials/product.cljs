@@ -14,10 +14,12 @@
 
 (defonce product-detail (reagent/atom {:response "[nil]"}))
 
-(def product-details-config {:base_url "https://api.yaas.io/hybris/productdetails/v1/may18sapphire/productdetails/"
+(def tenant "may18sapphire") ;; put YOUR tenant here
+
+(def product-details-config {:base_url (str "https://api.yaas.io/hybris/productdetails/v1/" tenant "/productdetails/")
                              :scopes   ["hybris.product_read_unpublished"]})
 
-(def product-config {:base_url "https://api.yaas.io/hybris/product/v1/may18sapphire/products/"
+(def product-config {:base_url (str "https://api.yaas.io/hybris/product/v1/" tenant "/products/")
                      :scopes   ["hybris.product_read_unpublished" "hybris.product_create" "hybris.product_publish"]})
 
 (def products-chan (chan))

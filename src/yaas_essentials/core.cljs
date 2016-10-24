@@ -36,7 +36,7 @@
 (defn access-token []
   [:div "Request count: " (@counter1-state :count)
    [:div "Token response: " (@ynet/token-state :response)]
-   [:div "Token: " (@ynet/bearer :bearer)]
+   [:div "Token: " (@ynet/bearer (yproduct/product-details-config :scopes))]
    [:div
     [:button {:on-click #(on-click counter1-state)}
      "Get Token"]]])
@@ -86,16 +86,49 @@
      "Create Product"]]])
 
 (defcard-rg getting-an-access-token
+            "Acquire access token from YaaS
+
+            ```clojure
+            (def default-env {:client_id \"Your client ID\" :client_secret \"your client secret\"})
+
+            (def token-url \"https://api.yaas.io/hybris/oauth2/v1/token\")
+
+            (def bearer (reagent/atom {:bearer \"[]\"}))
+
+            (defn renew-token [scopes retry-fn]
+
+              (go (let [response (<! (http/post token-url
+                {:form-params (merge default-env {:grant_type \"client_credentials\"
+                :scope (str/join \" \" scopes)}) :with-credentials? false           }))]
+                        (swap! bearer merge @bearer {scopes (:access_token (:body response))})
+                        (js/setTimeout retry-fn 200)
+                     )
+                  )
+            )
+            ```
+            "
             [access-token])
 
 (defcard-rg fetch-all-products
-            "Fetch *all* products"
+            "Fetch *all* products
+            ```clojure
+            (defn auth-header [scopes] {\"Authorization\"  (str \"Bearer \" (@bearer scopes))})
+
+            (def product-details-config {:base_url \"https://api.yaas.io/hybris/productdetails/v1/may18sapphire/productdetails/\"
+                                         :scopes   [\"hybris.product_read_unpublished\"]})
+
+            ```
+
+            "
             [products]
             {:inspect-data true}
             )
 
 (defcard-rg fetch-single-product
-            "Get a **single** product"
+            "Get a **single** product
+            ```clojure
+            (defn auth-header [scopes] {\"Authorization\"  (str \"Bearer \" (@bearer scopes))})
+            ```"
             [product-detail]
             {:inspect-data true}
             )

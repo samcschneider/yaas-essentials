@@ -5,11 +5,11 @@
    [cljs.core.async :refer [<! put! chan]]
    [yaas-essentials.network :as ynet]
    [yaas-essentials.product :as yproduct]
+   [yaas-essentials.product-ui-state :as yproduct-ui]
    [devcards.util.utils :as utils]
-   [cljs.pprint :as pprint]
    )
   (:require-macros
-   [devcards.core :as dc :refer [defcard deftest defcard-rg]]
+   [devcards.core :refer [defcard deftest defcard-rg]]
    [cljs.core.async.macros :refer [go]]
    ))
 
@@ -44,12 +44,12 @@
      "Get Token"]]])
 
 (defn product-click []
-  (yproduct/get-products)
+  (yproduct/get-products yproduct-ui/products-chan)
   )
 
 (defn products []
   [:div "Request count: " (@counter1-state :count)
-   [:div "Product response: " [:textarea {:value (utils/pprint-str (:response @yproduct/product)) :cols 120 :rows 15}]]
+   [:div "Product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product)) :cols 120 :rows 15}]]
    [:div
     [:button {:on-click #(product-click)}
      "Get Products"]]])
@@ -58,12 +58,12 @@
 
 
 (defn product-detail-click []
-  (yproduct/get-products @product-id)
+  (yproduct/get-products @product-id yproduct-ui/product-detail-chan)
   )
 
 (defn product-detail []
 
-   [:div "Single product response: " [:textarea { :value (utils/pprint-str (:response @yproduct/product-detail)) :cols 120 :rows 15}]
+   [:div "Single product response: " [:textarea { :value (utils/pprint-str (:response @yproduct-ui/product-detail)) :cols 120 :rows 15}]
    [:div
     (row "Product ID" product-id)
     [:button {:on-click #(product-detail-click)}
@@ -74,12 +74,12 @@
 (defonce product-description (reagent/atom ""))
 
 (defn product-create-click[]
-  (yproduct/create-product {"name" @product-name "description" @product-description "sku" @product-sku})
+  (yproduct/create-product {"name" @product-name "description" @product-description "sku" @product-sku} yproduct-ui/product-create-chan)
   )
 
 (defn product-create []
 
-  [:div "Create product response: " [:textarea {:value (utils/pprint-str (:response @yproduct/product-create)) :cols 120 :rows 15}]
+  [:div "Create product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-create)) :cols 120 :rows 15}]
    [:div
      (row "SKU" product-sku)
      (row "Product Name" product-name)
@@ -242,7 +242,7 @@
   ;; node is on the page
   (if-let [node (.getElementById js/document "main-app-area")]
     (.render js/ReactDOM (sab/html [:div "This is working"]) node))
-  (yproduct/event-loop-setup)
+  (yproduct-ui/event-loop-setup)
   )
 
 (main)

@@ -5,6 +5,8 @@
    [cljs.core.async :refer [<! put! chan]]
    [yaas-essentials.network :as ynet]
    [yaas-essentials.product :as yproduct]
+   [devcards.util.utils :as utils]
+   [cljs.pprint :as pprint]
    )
   (:require-macros
    [devcards.core :as dc :refer [defcard deftest defcard-rg]]
@@ -35,7 +37,7 @@
 
 (defn access-token []
   [:div "Request count: " (@counter1-state :count)
-   [:div "Token response: " (@ynet/token-state :response)]
+   [:div "Token response: " [:textarea {:value (utils/pprint-str (@ynet/token-state :response)) :cols 120 :rows 15}]]
    [:div "Token: " (@ynet/bearer (yproduct/product-details-config :scopes))]
    [:div
     [:button {:on-click #(on-click counter1-state)}
@@ -47,7 +49,7 @@
 
 (defn products []
   [:div "Request count: " (@counter1-state :count)
-   [:div "Product response: " (str (:response @yproduct/product))]
+   [:div "Product response: " [:textarea {:value (utils/pprint-str (:response @yproduct/product)) :cols 120 :rows 15}]]
    [:div
     [:button {:on-click #(product-click)}
      "Get Products"]]])
@@ -61,7 +63,7 @@
 
 (defn product-detail []
 
-   [:div "Single product response: " (str (:response @yproduct/product-detail))
+   [:div "Single product response: " [:textarea { :value (utils/pprint-str (:response @yproduct/product-detail)) :cols 120 :rows 15}]
    [:div
     (row "Product ID" product-id)
     [:button {:on-click #(product-detail-click)}
@@ -77,7 +79,7 @@
 
 (defn product-create []
 
-  [:div "Create product response: " (str (:response @yproduct/product-create))
+  [:div "Create product response: " [:textarea {:value (utils/pprint-str (:response @yproduct/product-create)) :cols 120 :rows 15}]
    [:div
      (row "SKU" product-sku)
      (row "Product Name" product-name)
@@ -114,8 +116,65 @@
             ```clojure
             (defn auth-header [scopes] {\"Authorization\"  (str \"Bearer \" (@bearer scopes))})
 
-            (def product-details-config {:base_url \"https://api.yaas.io/hybris/productdetails/v1/may18sapphire/productdetails/\"
-                                         :scopes   [\"hybris.product_read_unpublished\"]})
+            (def tenant \"may18sapphire\") ;; put YOUR tenant here
+
+            (def product-details-config {:base_url (str \"https://api.yaas.io/hybris/productdetails/v1/\" tenant \"/productdetails/\")
+                             :scopes   [\"hybris.product_read_unpublished\"]})
+
+            (def products-chan (chan))
+
+            (defn products-event-loop []
+              (go-loop []
+                (when-let [response (<! products-chan)]
+                  (log \"received data on products channel\")
+                  (log response)
+                  (if (= (:status response) 200)
+                    (swap! product merge @product {:response response})
+                    (swap! product merge @product {:response (format-error response)})
+                  )
+                  (recur)
+                )
+              )
+            )
+
+            (defn get-products ([]
+              (ynet/yget (product-details-config :base_url) {} (product-details-config :scopes) products-chan)
+              )
+
+              ([id]
+              (ynet/yget (str (product-details-config :base_url) id) {} (product-details-config :scopes) product-detail-chan)
+            )
+
+            (defn yrequest ([scopes request-fn reply-chan]
+              (yrequest scopes request-fn reply-chan 0)
+              )
+
+              ([scopes request-fn reply-chan tries]
+                (go (let [response (<! (request-fn))]
+                  (if (and (>= (:status response) 200) (< (:status response) 400)) ;allow 2xx and 3xx responses
+                    (>! reply-chan response)
+                    (if (or (= (:status response) 401) (= (:status response 503)))
+                      (do
+                        (log \"Renewing token...\")
+                        (let [try-count (inc tries)]
+                          (if (< try-count 3)
+                            (renew-token scopes (fn [] (yrequest scopes request-fn reply-chan try-count)))
+                            (>! reply-chan response)
+                          )
+                        )
+                      )
+                    (do
+                      (log (str \"Error response or unrecoverable status from server\" response))
+                      (>! reply-chan response)
+                    )
+                  )
+                )
+              )
+            )))
+
+            (defn yget [url headers scopes reply-chan]
+              (yrequest scopes (fn[] (http/get url {:headers (merge headers (auth-header scopes)) :with-credentials? false})) reply-chan)
+            )
 
             ```
 
@@ -126,15 +185,54 @@
 
 (defcard-rg fetch-single-product
             "Get a **single** product
+            Uses same API (network layer as get all products)
+
             ```clojure
-            (defn auth-header [scopes] {\"Authorization\"  (str \"Bearer \" (@bearer scopes))})
+            (defn product-detail-event-loop []
+              (go-loop []
+                (when-let [response (<! product-detail-chan)]
+                (log \"received data on product detail channel\")
+                (log response)
+                (if (= (:status response) 200)
+                  (swap! product-detail merge @product-detail {:response response})
+                  (swap! product merge product-detail {:response (format-error response)})
+                )
+                (recur)
+              )
+            )
+
             ```"
             [product-detail]
             {:inspect-data true}
             )
 
 (defcard-rg create-product
-            "Create a **new** product"
+            "Create a **new** product
+
+            ```clojure
+            (defn product-create-event-loop []
+              (go-loop []
+                (when-let [response (<! product-create-chan)]
+                  (log \"received data on product create channel\")
+                  (log response)
+                  (if (or (= (:status response) 200) (= (:status response) 201))
+                    (swap! product-create merge @product-create {:response response})
+                    (swap! product-create merge @product-create {:response (format-error response)})
+                  )
+                  (recur)
+                )
+              )
+            )
+
+            (defn product-create-click[]
+              (yproduct/create-product {\"name\" @product-name \"description\" @product-description \"sku\" @product-sku})
+            )
+
+            (defn create-product [product]
+              (ynet/ypost (product-config :base_url) product {} (product-config :scopes) product-create-chan)
+              )
+            ```
+            "
             [product-create]
             {:inspect-data true}
             )

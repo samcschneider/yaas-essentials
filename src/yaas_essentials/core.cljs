@@ -17,8 +17,6 @@
 
 (defn on-click [ratom]
   (swap! ratom update-in [:count] inc)
-  ;; use scopes for product details for reference...
-
   (ynet/renew-token (yproduct/product-details-config :scopes) #())
   )
 
@@ -69,6 +67,27 @@
     [:button {:on-click #(product-detail-click)}
      "Get Single Product"]]])
 
+(defonce update-product-id (reagent/atom ""))
+(defonce update-product-sku (reagent/atom ""))
+(defonce update-product-name (reagent/atom ""))
+(defonce update-product-description (reagent/atom ""))
+
+(defn product-update-click[]
+  (yproduct/update-product @update-product-id {"name" @update-product-name "description" @update-product-description "sku" @update-product-sku} yproduct-ui/product-update-chan)
+  )
+
+(defn product-update []
+
+  [:div "Update product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-update)) :cols 120 :rows 15}]
+   [:div
+    (row "ID" update-product-id)
+    (row "SKU" update-product-sku)
+     (row "Product Name" update-product-name)
+     (row "Product Description" update-product-description)
+    [:button {:on-click #(product-update-click)}
+     "Update Product"]]])
+
+
 (defonce product-sku (reagent/atom ""))
 (defonce product-name (reagent/atom ""))
 (defonce product-description (reagent/atom ""))
@@ -81,9 +100,9 @@
 
   [:div "Create product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-create)) :cols 120 :rows 15}]
    [:div
-     (row "SKU" product-sku)
-     (row "Product Name" product-name)
-     (row "Product Description" product-description)
+    (row "SKU" product-sku)
+    (row "Product Name" product-name)
+    (row "Product Description" product-description)
     [:button {:on-click #(product-create-click)}
      "Create Product"]]])
 
@@ -180,7 +199,6 @@
 
             "
             [products]
-            {:inspect-data true}
             )
 
 (defcard-rg fetch-single-product
@@ -203,7 +221,6 @@
 
             ```"
             [product-detail]
-            {:inspect-data true}
             )
 
 (defcard-rg create-product
@@ -234,9 +251,14 @@
             ```
             "
             [product-create]
-            {:inspect-data true}
             )
 
+(defcard-rg update-product
+            "Updates an existing product
+
+            "
+            [product-update]
+            )
 (defn main []
   ;; conditionally start the app based on whether the #main-app-area
   ;; node is on the page

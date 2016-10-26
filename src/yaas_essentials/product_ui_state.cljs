@@ -42,7 +42,7 @@
              (log response)
              (if (= (:status response) 200)
                (swap! product-detail merge @product-detail {:response response})
-               (swap! product merge product-detail {:response (format-error response)})
+               (swap! product-detail merge @product-detail {:response (format-error response)})
                )
              (recur)
              )

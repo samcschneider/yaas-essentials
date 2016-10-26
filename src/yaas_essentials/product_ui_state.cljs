@@ -11,11 +11,13 @@
 (defonce product-create (reagent/atom {:response ""}))
 (defonce product-update (reagent/atom {:response ""}))
 (defonce product-detail (reagent/atom {:response ""}))
+(defonce product-delete (reagent/atom {:response ""}))
 
 (def products-chan (chan))
 (def product-detail-chan (chan))
 (def product-create-chan (chan))
 (def product-update-chan (chan))
+(def product-delete-chan (chan))
 
 (defn format-error [response]
   (str "Error returned from server " (:status response) " " (get-in response [:body :message]))
@@ -77,9 +79,24 @@
            )
   )
 
+(defn product-delete-event-loop []
+  (go-loop []
+           (when-let [response (<! product-delete-chan)]
+             (log "received data on product delete channel")
+             (log response)
+             (if (= (:status response) 204)
+               (swap! product-delete merge @product-delete {:response response})
+               (swap! product-delete merge @product-delete {:response (format-error response)})
+               )
+             (recur)
+             )
+           )
+  )
+
 (defn event-loop-setup []
   (products-event-loop)
   (product-detail-event-loop)
   (product-create-event-loop)
   (product-update-event-loop)
+  (product-delete-event-loop)
   )

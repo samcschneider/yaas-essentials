@@ -13,7 +13,8 @@
                              :scopes   ["hybris.product_read_unpublished"]})
 
 (def product-config {:base_url (str "https://api.yaas.io/hybris/product/v1/" tenant "/products/")
-                     :scopes   ["hybris.product_read_unpublished" "hybris.product_create" "hybris.product_publish" "hybris.product_update"]})
+                     :scopes   ["hybris.product_read_unpublished" "hybris.product_create" "hybris.product_publish"
+                                "hybris.product_update" "hybris.product_delete"]})
 
 (defn get-products
   ([reply-chan]
@@ -31,5 +32,11 @@
 (defn update-product [id product reply-chan]
   (let [url (str (product-config :base_url) id) scopes (product-config :scopes) params {:partial true}]
     (ynet/yput url product {} scopes params reply-chan)
+    )
+  )
+
+(defn delete-product [id reply-chan]
+  (let [url (str (product-config :base_url) id) scopes (product-config :scopes)]
+      (ynet/ydelete url {} scopes {} reply-chan)
     )
   )

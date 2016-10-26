@@ -106,6 +106,20 @@
     [:button {:on-click #(product-create-click)}
      "Create Product"]]])
 
+(defonce delete-product-id (reagent/atom ""))
+
+(defn product-delete-click[]
+  (yproduct/delete-product @delete-product-id yproduct-ui/product-delete-chan)
+  )
+
+(defn product-delete []
+
+  [:div "Update delete response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-delete)) :cols 120 :rows 15}]
+   [:div
+    (row "ID" delete-product-id)
+    [:button {:on-click #(product-delete-click)}
+     "Delete Product"]]])
+
 (defcard-rg getting-an-access-token
             "Acquire access token from YaaS
 
@@ -259,6 +273,14 @@
             "
             [product-update]
             )
+
+(defcard-rg delete-product
+            "Deletes an existing product
+
+            "
+            [product-delete]
+            )
+
 (defn main []
   ;; conditionally start the app based on whether the #main-app-area
   ;; node is on the page

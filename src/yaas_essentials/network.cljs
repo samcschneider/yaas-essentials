@@ -81,6 +81,9 @@
   (yrequest scopes (fn [] (http/put url (merge {:query-params params :json-params data} (default-config headers scopes)))) reply-chan)
   )
 
+(defn ydelete [url headers scopes params reply-chan]
+  (yrequest scopes (fn [] (http/delete url (merge {:query-params params} (default-config headers scopes)))) reply-chan)
+  )
 
 
 

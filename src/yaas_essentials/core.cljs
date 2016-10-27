@@ -42,6 +42,8 @@
      "Get Token"]]])
 
 (defn product-click []
+  ; paged fetch example:
+  ;(yproduct/get-products {:pageSize 2 :pageNumber 1} yproduct-ui/products-chan)
   (yproduct/get-products yproduct-ui/products-chan)
   )
 
@@ -56,11 +58,10 @@
 
 
 (defn product-detail-click []
-  (yproduct/get-products @product-id yproduct-ui/product-detail-chan)
+  (yproduct/get-product @product-id yproduct-ui/product-detail-chan)
   )
 
 (defn product-detail []
-
    [:div "Single product response: " [:textarea { :value (utils/pprint-str (:response @yproduct-ui/product-detail)) :cols 120 :rows 15}]
    [:div
     (row "Product ID" product-id)

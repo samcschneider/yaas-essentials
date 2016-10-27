@@ -77,8 +77,13 @@
    (yrequest scopes (fn[] (http/get url (merge {:query-params params} (default-config headers scopes)))) reply-chan))
   )
 
-(defn ypost [url data headers scopes reply-chan]
-  (yrequest scopes (fn [] (http/post url {:headers (merge headers (auth-header scopes)) :json-params data :with-credentials? false})) reply-chan)
+(defn ypost
+  ([url data headers scopes reply-chan]
+   (ypost url data headers scopes {} reply-chan)
+  )
+  ([url data headers scopes params reply-chan]
+   (yrequest scopes (fn [] (http/post url (merge {:query-params params :json-params data} (default-config headers scopes)))) reply-chan)
+    )
   )
 
 (defn yput [url data headers scopes params reply-chan]

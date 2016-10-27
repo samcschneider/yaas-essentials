@@ -15,6 +15,8 @@
 
 (enable-console-print!)
 
+(def english-lang "en")
+
 (defn on-click [ratom]
   (swap! ratom update-in [:count] inc)
   (ynet/renew-token (yproduct/product-details-config :scopes) #())
@@ -69,12 +71,12 @@
      "Get Single Product"]]])
 
 (defonce update-product-id (reagent/atom ""))
-(defonce update-product-sku (reagent/atom ""))
+(defonce update-product-code (reagent/atom ""))
 (defonce update-product-name (reagent/atom ""))
 (defonce update-product-description (reagent/atom ""))
 
 (defn product-update-click[]
-  (yproduct/update-product @update-product-id {"name" @update-product-name "description" @update-product-description "sku" @update-product-sku} yproduct-ui/product-update-chan)
+  (yproduct/update-product @update-product-id {:name @update-product-name :description @update-product-description :code @update-product-code} english-lang yproduct-ui/product-update-chan)
   )
 
 (defn product-update []
@@ -82,26 +84,26 @@
   [:div "Update product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-update)) :cols 120 :rows 15}]
    [:div
     (row "ID" update-product-id)
-    (row "SKU" update-product-sku)
+    (row "Code" update-product-code)
      (row "Product Name" update-product-name)
      (row "Product Description" update-product-description)
     [:button {:on-click #(product-update-click)}
      "Update Product"]]])
 
 
-(defonce product-sku (reagent/atom ""))
+(defonce product-code (reagent/atom ""))
 (defonce product-name (reagent/atom ""))
 (defonce product-description (reagent/atom ""))
 
 (defn product-create-click[]
-  (yproduct/create-product {"name" @product-name "description" @product-description "sku" @product-sku} yproduct-ui/product-create-chan)
+  (yproduct/create-product {:name @product-name :description @product-description :code @product-code} english-lang yproduct-ui/product-create-chan)
   )
 
 (defn product-create []
 
   [:div "Create product response: " [:textarea {:value (utils/pprint-str (:response @yproduct-ui/product-create)) :cols 120 :rows 15}]
    [:div
-    (row "SKU" product-sku)
+    (row "Code" product-code)
     (row "Product Name" product-name)
     (row "Product Description" product-description)
     [:button {:on-click #(product-create-click)}

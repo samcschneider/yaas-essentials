@@ -34,13 +34,13 @@
     )
   )
 
-(defn create-product [product reply-chan]
-  (ynet/ypost (product-config :base_url) product {} (product-config :scopes) reply-chan)
+(defn create-product [product language reply-chan]
+  (ynet/ypost (product-config :base_url) product {"Content-Language" language} (product-config :scopes) reply-chan)
   )
 
-(defn update-product [id product reply-chan]
+(defn update-product [id product language reply-chan]
   (let [url (str (product-config :base_url) id) scopes (product-config :scopes) params {:partial true}]
-    (ynet/yput url product {} scopes params reply-chan)
+    (ynet/yput url product {"Content-Language" language} scopes params reply-chan)
     )
   )
 

@@ -37,12 +37,41 @@ Fun things you can do within the Clojurescript repl (launches with **lein figwhe
     ;; print to javascript console
     (pc @product)
     
-   ;; after fetching products, you can inspect them and extract various components
-   (map (comp :description :product) (get-in @product [:response :body]))
-   
-   ;; alternatively, save this value and print it to the console (or do something else with it...)
-   (def last-products-descriptions (map (comp :description :product) (get-in @product [:response :body])))
-   
-   (pc last-products-descriptions)
+    ;; after fetching products, you can inspect them and extract various components
+    (map (comp :description :product) (get-in @product [:response :body]))
+    
+    ;; alternatively, save this value and print it to the console (or do something else with it...)
+    (def last-products-descriptions (map (comp :description :product) (get-in @product [:response :body])))
+    
+    (pc last-products-descriptions)
+    
+    ;; you can also inspect other namespaces
+    
+    (require '[yaas-essentials.network :as ynet])
+    
+    (p ynet/token-url)
+    
+    (p @ynet/bearer)
+    
+    ;; or just evaluate a symbol from the prompt
+    
+    @ynet/bearer
+    
+    ;; you can evaluate symbols which invoke functions, of course!
+    
+    (require '[yaas-essentials.product :as prod])
+    
+    (:scopes prod/product-config)
+    
+    ;; now ask for a new token
+    
+    (def last-token @ynet/bearer)
+    (ynet/renew-token (:scopes prod/product-config) #())
+    
+    ;; verify that your token is now different
+    (p last-token)
+    
+    ;; remember: the call to renew-token is async and the bearer make take a moment to contain the new value
+    (p @ynet/bearer)
     
 ```

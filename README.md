@@ -43,6 +43,6 @@ Fun things you can do within the Clojurescript repl (launches with **lein figwhe
    ;; alternatively, save this value and print it to the console (or do something else with it...)
    (def last-products-descriptions (map (comp :description :product) (get-in @product [:response :body])))
    
-   (pc last-products)
+   (pc last-products-descriptions)
     
 ```
